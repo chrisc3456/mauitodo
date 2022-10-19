@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:MauiToDo.ViewModels"
+             xmlns:converters="clr-namespace:MauiToDo.Converters"
+             x:Class="MauiToDo.ToDoItemsPage"
+             Title="To-Do Items">
+
+    <ContentPage.Resources>
+        <converters:ToDoStrikethroughConverter x:Key="toDoItemStrikethrough" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*">
+        <ScrollView Grid.Row="0">
+            <!--Note - Visual Studio highlights LoadDataCommand with a message 'No DataContext found for binding' however the app still works correctly, see https://github.com/dotnet/maui/issues/4818-->
+            <RefreshView HorizontalOptions="CenterAndExpand" VerticalOptions="Fill" IsRefreshing="{Binding IsRefreshing}" x:Name="refreshItems" Command="{Binding LoadDataCommand}" >
+            
+                <!--Using CollectionView as the immediate child of ScrollView/RefreshView causes the root layout to expand beyond the height of the screen regardless of how little space the content takes up. Using a VerticalStackLayout as an intermediate layout avoids this-->
+                <VerticalStackLayout VerticalOptions="StartAndExpand">
+
+                    <CollectionView ItemsSource="{Binding ToDoItems}">
+                        
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
+                        </CollectionView.ItemsLayout>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <!--SelectionChangedCommand doesn't work when a frame is being used within the template... https://github.com/dotnet/maui/issues/8792... Border looks to be more customisable though-->
+                                <!--<Frame CornerRadius="5" Margin="20,20,20,0" Padding="20" >-->
+
+                                <SwipeView>
+                                    <SwipeView.LeftItems>
+                                        <SwipeItems Mode="Execute">
+                                            <SwipeItem Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ToDoItemsViewModel}}, Path=DeleteItemCommand}" CommandParameter="{Binding .}" />
+                                        </SwipeItems>
+                                    </SwipeView.LeftItems>
+                                
+                                    <Border Margin="20,20,20,0" Stroke="LightGrey" StrokeThickness="1" Padding="20,20">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ToDoItemsViewModel}}, Path=ItemTappedCommand}" CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                    
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="5,5,5,5"/>
+                                        </Border.StrokeShape>
+
+                                        <HorizontalStackLayout Spacing="10" >
+                                            <!--Ideally we'd use command binding against a checkbox like we would a button however this doesn't exist yet so we have to use a tap gesture recognizer instead
+                                                CheckedChanged would be another option however it doesn't seem to be possible to pass additional parameters to this so we wouldn't know which item was tapped-->
+                                            <CheckBox x:Name="isCompleteCheckbox" IsChecked="{Binding IsCompleted}" VerticalOptions="Center">
+                                                <CheckBox.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ToDoItemsViewModel}}, Path=ToggleItemCompletedCommand}" CommandParameter="{Binding .}" />
+                                                </CheckBox.GestureRecognizers>
+                                            </CheckBox>
+
+                                            <VerticalStackLayout Spacing="5">
+                                                <!--Fixing the WidthRequest is a workaround as there's currently a bug which ignores the LineBreakMode when part of a VerticalStackLayout in a CollectionView so it never wraps. In a real app we'd need to set in the code-behind based on the device dimensions-->
+                                                <Label x:Name="descriptionText" Text="{Binding TaskDescription}" TextDecorations="{Binding IsCompleted, Converter={StaticResource toDoItemStrikethrough}}" LineBreakMode="WordWrap" WidthRequest="270" />
+                                                <Label x:Name="createdTimeText" Text="{Binding CreatedTime}" FontSize="Micro" FontFamily="OpenSansSemibold" />
+                                            </VerticalStackLayout>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </SwipeView>
+                                <!--</Frame>-->
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </RefreshView>
+        </ScrollView>
+
+        <!--MAUI doesn't have a FAB equivalent but a basic implementation can be replicated with a styled button, not sure if iOS has something like this or if it's just an Android/Material Design thing-->
+        <!--Command approach rather than a click event also doesn't seem to be working like with other elements above... Command="{Binding AddButtonClicked}"-->
+        <Button Grid.Row="0"
+                BackgroundColor="{StaticResource Primary}"
+                HorizontalOptions="EndAndExpand"
+                VerticalOptions="EndAndExpand"
+                Margin="20"
+                HeightRequest="60"
+                WidthRequest="60"
+                CornerRadius="30"
+                FontSize="30"
+                Text="+"
+                x:Name="addItemButton"
+                Clicked="AddItemButton_Clicked">
+            <Button.Shadow>
+                <Shadow Brush="Black"
+                        Offset="5,5"
+                        Radius="10"
+                        Opacity="0.5"/>
+            </Button.Shadow>
+        </Button>
+    </Grid>
+</ContentPage>
