@@ -36,7 +36,7 @@
                                         </SwipeItems>
                                     </SwipeView.LeftItems>
                                 
-                                    <Border Margin="20,20,20,0" Stroke="LightGrey" StrokeThickness="1" Padding="20,20">
+                                    <Border Margin="20,20,20,0" Stroke="#cacaca" StrokeThickness="1" Padding="20,20">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ToDoItemsViewModel}}, Path=ItemTappedCommand}" CommandParameter="{Binding .}" />
                                         </Border.GestureRecognizers>
